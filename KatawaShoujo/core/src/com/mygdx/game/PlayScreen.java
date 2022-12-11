@@ -17,12 +17,15 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Slider;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.NinePatchDrawable;
+import com.badlogic.gdx.utils.Timer;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 
 public class PlayScreen implements Screen {
@@ -31,18 +34,38 @@ public class PlayScreen implements Screen {
     private OrthographicCamera camera;
     private Player player;
 
+    private Vector2 npcVelocity = new Vector2();
+
     private float playerX, playerY;
+    private int documentNumber = 1;
+
     private Texture pauseBackground;
+    private Texture dialogBox;
+    private Sprite npc;
+
     private TextButton exitButton;
     private TextButton backToMenuButton;
     private TextButton.TextButtonStyle buttonStyle;
+
     private Stage stage;
+    private Stage dialog;
+
+    private String text;
+    private String textOutput;
+    private Label txt;
+    private Label.LabelStyle labelStyle;
+    private TextImport reader;
+
     private Sounds click;
     private Skin skinSlider;
     private Slider sound;
     private int soundValue = 30;
     private Slider.SliderStyle sliderStyle;
+
     private boolean pause = false;
+    private boolean speaking = false;
+    private boolean npcMoving = false;
+    private boolean end = false;
 
     public PlayScreen(final Katawa game){
         this.game = game;
@@ -50,26 +73,56 @@ public class PlayScreen implements Screen {
 
     @Override
     public void show() {
+        //Подгрузка карты
         TiledMap map = new TmxMapLoader().load("maps/map.tmx");
         renderer = new OrthogonalTiledMapRenderer(map);
+
+        //Установка камеры
         camera = new OrthographicCamera();
         camera.setToOrtho( false, Gdx.graphics.getWidth() / 2, Gdx.graphics.getHeight() / 2);
         camera.translate(520,200);
+        //Подгрузка игрока
         player = new Player(new Sprite(new Texture("player/player.png")), (TiledMapTileLayer) map.getLayers().get("col"));
         player.setPosition(520, 33);
 
+        //Подгрузка NPC
+        npc = new Sprite(new Texture("NPC/prologNpc.png"));
+        npc.setPosition(550,-450);
+        npc.setSize(12,30);
+        npcVelocity.y = 100;
 
+        //Установка стиля диалогового окна
+        labelStyle = new Label.LabelStyle();
+        labelStyle.font = game.comicSans;
+        labelStyle.fontColor = Color.valueOf("#8E8574");
+
+        reader = new TextImport();
+
+        //Установка текста диалога
+        txt = new Label("", labelStyle);
+        txt.setSize(1150,175);
+        txt.setWrap(true);
+        txt.setFontScale(0.7f);
+        txt.setPosition(70,0);
+
+        //Установка текстуры диалогового окна
+        dialogBox = new Texture(Gdx.files.internal("Dialogs/dialogBox.png"));
+
+        //Установка текстуры окна паузы
         pauseBackground = new Texture(Gdx.files.internal("Texture/Pause/pauseBackground.png"));
 
         stage = new Stage(new StretchViewport(game.WIDTH,game.HEIGHT));
+        dialog = new Stage(new StretchViewport(game.WIDTH,game.HEIGHT));
 
         click = new Sounds("MainMenu");
 
+        //Установка стиля кнопок паузы
         buttonStyle = new TextButton.TextButtonStyle();
         buttonStyle.font = game.comicSans;
         buttonStyle.fontColor = Color.valueOf("#8E8574");
         buttonStyle.overFontColor = Color.valueOf("#aba498");
 
+        //Реализация кнопок паузы
         exitButton = new TextButton("Выход", buttonStyle);
         exitButton.setPosition(game.WIDTH/2 - 15, game.HEIGHT/2 - 100);
         exitButton.addListener(new ClickListener(){
@@ -79,7 +132,6 @@ public class PlayScreen implements Screen {
                 Gdx.app.exit();
             }
         });
-
         backToMenuButton = new TextButton("Вернуться в главное меню", buttonStyle);
         backToMenuButton.setPosition(game.WIDTH/2 - 170, game.HEIGHT/2 - 60);
         backToMenuButton.addListener(new ClickListener(){
@@ -94,7 +146,7 @@ public class PlayScreen implements Screen {
             }
         });
 
-
+        //Установка и реализация ползунка звука
         final TextureAtlas sliderTexture = new TextureAtlas(Gdx.files.internal("Texture/MainMenu/SoundSlider.pack"));
         skinSlider = new Skin();
         skinSlider.addRegions(sliderTexture);
@@ -113,10 +165,13 @@ public class PlayScreen implements Screen {
                 game.music.musicSound.setVolume(soundValue * 0.01f);
             }
         });
-        stage.addActor(sound);
 
+        //Добавление всех актёров на сцены
+        stage.addActor(sound);
         stage.addActor(backToMenuButton);
         stage.addActor(exitButton);
+
+        dialog.addActor(txt);
 
         camera.update();
     }
@@ -124,6 +179,7 @@ public class PlayScreen implements Screen {
     @Override
     public void render(float delta) {
         if(!pause && !player.isDead) {
+            //Отрисовка движений персонажа
             Gdx.input.setInputProcessor(player);
             Gdx.gl.glClearColor(0, 0, 0, 1);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -135,9 +191,10 @@ public class PlayScreen implements Screen {
             renderer.getBatch().end();
             playerX = player.getX();
             playerY = player.getY();
+
+            //Ограничение для камеры
             float h = camera.viewportWidth;
             float w = camera.viewportHeight;
-
 
             camera.position.set(playerX, playerY, 0);
 
@@ -153,17 +210,69 @@ public class PlayScreen implements Screen {
             }
 
             camera.update();
-        }
 
-            if(Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)){
-                if(!pause){
-                    pause = true;
-                    Gdx.input.setInputProcessor(stage);
 
-                }else{
-                    pause = false;
+            //Запуск диалога
+            if (Gdx.input.isKeyJustPressed(Input.Keys.T)) {
+                if (!speaking)
+                    speaking = true;
+                else
+                    speaking = false;
+            }
+
+            //Работа диалога
+            if (speaking) {
+
+                //Движение NPC
+
+                renderer.getBatch().begin();
+                npc.draw(renderer.getBatch());
+                if (npc.getY() < 300 && npcMoving) {
+                    npc.setPosition(npc.getX(), npc.getY() + npcVelocity.y * delta);
+                } else if (npc.getY() >= 300 && npcMoving) {
+                    npcVelocity.y = 0;
+                    npcMoving = false;
+                }
+                renderer.getBatch().end();
+
+                //Работа диалогового окна
+                if (!npcMoving && !end) {
+                    game.batch.begin();
+                    game.batch.draw(dialogBox, 40, 10, 1200, 150);
+                    if (documentNumber < 40) {
+                        text = reader.reader(documentNumber);
+                        textOutput = " ";
+                        game.comicSans.draw(game.batch, textOutput, 70, 0);
+                        txt.toFront();
+                        dialog.draw();
+                        for (int j = 0; j < text.length(); j++) {
+
+                            textOutput += text.charAt(j);
+                            txt.setText(textOutput);
+                        }
+                    }
+                    game.batch.end();
+
+                    if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
+                        documentNumber++;
+                        if (documentNumber == 9)
+                            npcMoving = true;
+                    }
                 }
             }
+        }
+        //Вызов паузы
+
+        if(Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)){
+            if(!pause){
+                pause = true;
+                Gdx.input.setInputProcessor(stage);
+            }else{
+                pause = false;
+            }
+        }
+
+        //Работа паузы
             if(pause && !player.isDead) {
 
                 game.batch.begin();
@@ -199,6 +308,7 @@ public class PlayScreen implements Screen {
                 }
 
             }
+            //Секретка
         if(player.isDead){
             game.batch.begin();
             game.batch.draw(pauseBackground, game.WIDTH/2 - 200,game.HEIGHT/2 - 125);
@@ -214,6 +324,9 @@ public class PlayScreen implements Screen {
             game.music.musicSound.stop();
         }
     }
+
+
+
 
 
     @Override

@@ -37,7 +37,7 @@ public class Player extends Sprite implements InputProcessor {
     }
     private void update(float delta) {
 
-        float oldX = getX(), oldY = getY(), tileWidth = collisionLayer.getTileWidth(), tileHeight = collisionLayer.getTileHeight();
+        float oldX = getX(), oldY = getY();
 
         setX(getX() + velocity.x * delta);
 
@@ -105,25 +105,6 @@ public class Player extends Sprite implements InputProcessor {
         }
     }
 
-    public void setCollisionLayer(TiledMapTileLayer collisionLayer){
-        this.collisionLayer = collisionLayer;
-    }
-    public TiledMapTileLayer getCollisionLayer(){
-        return collisionLayer;
-    }
-
-    public float getSpeed(){
-        return speed;
-    }
-    public void setSpeed(float speed){
-        this.speed = speed;
-    }
-    public void setVelocity(Vector2 velocity){
-        this.velocity = velocity;
-    }
-    public Vector2 getVelocity(){
-        return velocity;
-    }
 
     @Override
     public boolean keyDown(int keycode) {
