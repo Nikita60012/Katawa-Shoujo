@@ -17,6 +17,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Slider;
@@ -27,6 +28,8 @@ import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.NinePatchDrawable;
 import com.badlogic.gdx.utils.Timer;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
+
+import javafx.scene.Parent;
 
 public class PlayScreen implements Screen {
     final Katawa game;
@@ -39,9 +42,11 @@ public class PlayScreen implements Screen {
     private float playerX, playerY;
     private int documentNumber = 1;
 
+
     private Texture pauseBackground;
     private Texture dialogBox;
     private Sprite npc;
+    private Image ending;
 
     private TextButton exitButton;
     private TextButton backToMenuButton;
@@ -49,10 +54,12 @@ public class PlayScreen implements Screen {
 
     private Stage stage;
     private Stage dialog;
+    private Stage endingStage;
 
     private String text;
     private String textOutput;
     private Label txt;
+    private Label name;
     private Label.LabelStyle labelStyle;
     private TextImport reader;
 
@@ -91,6 +98,10 @@ public class PlayScreen implements Screen {
         npc.setSize(12,30);
         npcVelocity.y = 100;
 
+        ending = new Image(new Texture("Texture/End/ending.png"));
+        ending.setPosition(0,0);
+        ending.setSize(2000,1000);
+
         //Установка стиля диалогового окна
         labelStyle = new Label.LabelStyle();
         labelStyle.font = game.comicSans;
@@ -103,8 +114,12 @@ public class PlayScreen implements Screen {
         txt.setSize(1150,175);
         txt.setWrap(true);
         txt.setFontScale(0.7f);
-        txt.setPosition(70,0);
+        txt.setPosition(70,-25);
 
+        name = new Label("",labelStyle);
+        name.setSize(1150,175);
+        name.setFontScale(0.7f);
+        name.setPosition(65,50);
         //Установка текстуры диалогового окна
         dialogBox = new Texture(Gdx.files.internal("Dialogs/dialogBox.png"));
 
@@ -113,6 +128,7 @@ public class PlayScreen implements Screen {
 
         stage = new Stage(new StretchViewport(game.WIDTH,game.HEIGHT));
         dialog = new Stage(new StretchViewport(game.WIDTH,game.HEIGHT));
+        endingStage = new Stage(new StretchViewport(game.WIDTH,game.HEIGHT));
 
         click = new Sounds("MainMenu");
 
@@ -166,12 +182,16 @@ public class PlayScreen implements Screen {
             }
         });
 
+
         //Добавление всех актёров на сцены
         stage.addActor(sound);
         stage.addActor(backToMenuButton);
         stage.addActor(exitButton);
 
         dialog.addActor(txt);
+        dialog.addActor(name);
+
+        endingStage.addActor(ending);
 
         camera.update();
     }
@@ -213,15 +233,12 @@ public class PlayScreen implements Screen {
 
 
             //Запуск диалога
-            if (Gdx.input.isKeyJustPressed(Input.Keys.T)) {
-                if (!speaking)
-                    speaking = true;
-                else
-                    speaking = false;
+            if (Gdx.input.isKeyJustPressed(Input.Keys.E) && playerX >= 485 && playerX <= 600 && playerY >= 250 && playerY <= 350) {
+                speaking = !speaking;
             }
 
             //Работа диалога
-            if (speaking) {
+            if (speaking && playerX >= 485 && playerX <= 600 && playerY >= 250 && playerY <= 350) {
 
                 //Движение NPC
 
@@ -239,7 +256,21 @@ public class PlayScreen implements Screen {
                 if (!npcMoving && !end) {
                     game.batch.begin();
                     game.batch.draw(dialogBox, 40, 10, 1200, 150);
-                    if (documentNumber < 40) {
+                    if (documentNumber == 5 || documentNumber == 17 || documentNumber == 23) {
+                        textOutput = "Хисао";
+                        name.setText(textOutput);
+                    } else if (documentNumber == 11) {
+                        textOutput = "???";
+                        name.setText(textOutput);
+                    }else  if(documentNumber == 20 || documentNumber == 30 || documentNumber == 31 || documentNumber == 32 || documentNumber == 36 || documentNumber == 37 || documentNumber == 39){
+                        textOutput = "Иванако";
+                        name.setText(textOutput);
+                    }else{
+                        name.setText("");
+                    }
+                    game.batch.end();
+                    game.batch.begin();
+                    if (documentNumber < 41) {
                         text = reader.reader(documentNumber);
                         textOutput = " ";
                         game.comicSans.draw(game.batch, textOutput, 70, 0);
@@ -253,9 +284,19 @@ public class PlayScreen implements Screen {
                     }
                     game.batch.end();
 
-                    if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
+                    //Концовка
+                    if (documentNumber == 41) {
+                        endingStage.draw();
+                        game.music.musicSound.stop();
+                        game.batch.begin();
+                        game.comicSans.draw(game.batch, "Продолжение следует...",475,360);
+                        game.batch.end();
+
+
+                        }
+                    if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) && documentNumber < 41) {
                         documentNumber++;
-                        if (documentNumber == 9)
+                        if (documentNumber == 10)
                             npcMoving = true;
                     }
                 }
@@ -324,10 +365,6 @@ public class PlayScreen implements Screen {
             game.music.musicSound.stop();
         }
     }
-
-
-
-
 
     @Override
     public void resize(int width, int height) {

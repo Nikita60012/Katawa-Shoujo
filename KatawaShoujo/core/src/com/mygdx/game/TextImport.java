@@ -1,7 +1,5 @@
 package com.mygdx.game;
 
-import com.badlogic.gdx.Gdx;
-
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;

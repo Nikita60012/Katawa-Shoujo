@@ -26,7 +26,7 @@ public class Katawa extends Game {
 		FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/FontComicSans.ttf"));
 		FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
 		parameter.size = 32;
-		parameter.characters = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЗЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя.,!?-0123456789+_=:;*/";
+		parameter.characters = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЗЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя.,!?-0123456789+_=:;*/«»–";
 		comicSans = generator.generateFont(parameter);
 		generator.dispose();
 
