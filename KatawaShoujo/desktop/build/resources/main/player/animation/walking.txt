@@ -1,0 +1,76 @@
+
+walking.png
+size: 256, 256
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+1down
+  rotate: false
+  xy: 58, 146
+  size: 21, 70
+  orig: 30, 75
+  offset: 0, 5
+  index: -1
+1up
+  rotate: false
+  xy: 27, 75
+  size: 23, 71
+  orig: 30, 75
+  offset: 0, 4
+  index: -1
+1walk
+  rotate: false
+  xy: 104, 147
+  size: 21, 69
+  orig: 30, 75
+  offset: 0, 6
+  index: -1
+2down
+  rotate: false
+  xy: 81, 146
+  size: 21, 70
+  orig: 30, 75
+  offset: 1, 5
+  index: -1
+2up
+  rotate: false
+  xy: 2, 2
+  size: 23, 71
+  orig: 30, 75
+  offset: 1, 4
+  index: -1
+2walk
+  rotate: false
+  xy: 2, 148
+  size: 27, 68
+  orig: 30, 75
+  offset: 0, 7
+  index: -1
+3down
+  rotate: false
+  xy: 27, 3
+  size: 21, 70
+  orig: 30, 75
+  offset: 0, 5
+  index: -1
+3up
+  rotate: false
+  xy: 2, 75
+  size: 23, 71
+  orig: 30, 75
+  offset: 0, 4
+  index: -1
+walk3
+  rotate: false
+  xy: 31, 148
+  size: 25, 68
+  orig: 27, 68
+  offset: 1, 0
+  index: -1
+3walk
+  rotate: false
+  xy: 31, 148
+  size: 25, 68
+  orig: 30, 75
+  offset: 1, 7
+  index: -1
